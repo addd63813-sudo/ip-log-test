@@ -1,5 +1,6 @@
 const express = require("express");
-const admin = require("firebase-admin");
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
 
 const app = express();
 
@@ -8,18 +9,19 @@ app.set("trust proxy", true);
 // Render 환경 변수에서 Firebase 키 읽기
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+// Firebase 초기화
+initializeApp({
+  credential: cert(serviceAccount),
 });
 
-const db = admin.firestore();
+const db = getFirestore();
 
 app.get("/", async (req, res) => {
   try {
     const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
     await db.collection("access").add({
-      ip: ip,
+      ip,
       time: new Date().toISOString(),
     });
 
