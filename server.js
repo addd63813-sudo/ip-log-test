@@ -18,11 +18,18 @@ const db = getFirestore();
 
 app.get("/", async (req, res) => {
   try {
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    // 실제 접속자 IP만 가져오기
+    const forwarded = req.headers["x-forwarded-for"];
+    const ip = forwarded
+      ? forwarded.split(",")[0].trim()
+      : req.socket.remoteAddress;
 
+    // Firestore에 저장
     await db.collection("access").add({
       ip,
-      time: new Date().toISOString(),
+      time: new Date().toLocaleString("ko-KR", {
+        timeZone: "Asia/Seoul",
+      }),
     });
 
     res.send("접속 기록 저장 완료");
