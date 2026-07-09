@@ -18,7 +18,7 @@ const db = getFirestore();
 
 app.get("/", async (req, res) => {
   try {
-    // 실제 접속 IP 가져오기
+    // 접속한 사람의 실제 IP
     const forwarded = req.headers["x-forwarded-for"];
     const ip = forwarded
       ? forwarded.split(",")[0].trim()
@@ -32,11 +32,48 @@ app.get("/", async (req, res) => {
       }),
     });
 
-    // 사용자에게 보여줄 문구
-    res.status(500).send("에러: 클라이언트를 닫고 다시 시도하세요.");
+    // 접속한 사람에게 자신의 IP 표시
+    res.send(`
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>IP 확인</title>
+<style>
+body{
+    background:#000;
+    color:#00ff00;
+    font-family:monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+.box{
+    text-align:center;
+}
+h1{
+    font-size:48px;
+}
+p{
+    font-size:32px;
+}
+</style>
+</head>
+<body>
+<div class="box">
+    <h1>접속 완료</h1>
+    <p>당신의 IP 주소</p>
+    <p>${ip}</p>
+</div>
+</body>
+</html>
+    `);
+
   } catch (err) {
     console.error(err);
-    res.status(500).send("에러: 클라이언트를 닫고 다시 시도하세요.");
+    res.status(500).send("오류가 발생했습니다.");
   }
 });
 
