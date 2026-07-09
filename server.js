@@ -1,4 +1,34 @@
-res.send(`
+const express = require("express");
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+
+const app = express();
+
+app.set("trust proxy", true);
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+
+initializeApp({
+  credential: cert(serviceAccount),
+});
+
+const db = getFirestore();
+
+app.get("/", async (req, res) => {
+  try {
+    const forwarded = req.headers["x-forwarded-for"];
+    const ip = forwarded
+      ? forwarded.split(",")[0].trim()
+      : req.socket.remoteAddress;
+
+    await db.collection("access").add({
+      ip: ip,
+      time: new Date().toLocaleString("ko-KR", {
+        timeZone: "Asia/Seoul",
+      }),
+    });
+
+    res.send(`
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -35,4 +65,16 @@ h1{
 
 </body>
 </html>
-`);
+    `);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("에러 발생");
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`서버 실행: ${PORT}`);
+});
